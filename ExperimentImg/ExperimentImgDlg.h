@@ -46,11 +46,9 @@ public:
 	CStatic labelText;
 	CSliderCtrl slider;
 	CStatic threadNum;
-	afx_msg void OnTRBNThumbPosChangingSlider1(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMCustomdrawSlider1(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedButton2();
 	CButton checkBox;
-	afx_msg void OnBnClickedCheck1();
 	CComboBox comboBox;
 	afx_msg void OnBnClickedButton3();
 };
