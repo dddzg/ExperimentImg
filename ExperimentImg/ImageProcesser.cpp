@@ -391,7 +391,7 @@ CImage * ImageProcesser::merge(CImage * src, CImage * dist,double alpha)
 	CImageToMat(*src, *srcMat);
 	CImageToMat(*dist, *distMat);
 	auto within = [&](int x, int y) {
-		return x >= 0 && y >= 0 && x < (srcMat->rows) && y < (distMat->cols);
+		return x >= 0 && y >= 0 && x < (srcMat->rows) && y < (srcMat->cols);
 	};
 	for (int x = 0; x < distMat->rows; ++x) {
 		for (int y = 0; y < distMat->cols; ++y) {
