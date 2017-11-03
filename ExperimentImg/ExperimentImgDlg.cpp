@@ -72,11 +72,9 @@ void CExperimentImgDlg::paintPic(CImage * img, CStatic & pic)
 	CRect rect1;
 	height = img->GetHeight();
 	width = img->GetWidth();
-
 	pic.GetClientRect(&rect);
 	CDC *pDC = pic.GetDC();
 	SetStretchBltMode(pDC->m_hDC, STRETCH_HALFTONE);
-
 	if (width <= rect.Width() && height <= rect.Width())
 	{
 		rect1 = CRect(rect.TopLeft(), CSize(width, height));
@@ -88,10 +86,6 @@ void CExperimentImgDlg::paintPic(CImage * img, CStatic & pic)
 		float yScale = (float)rect.Height() / (float)height;
 		float ScaleIndex = (xScale <= yScale ? xScale : yScale);
 		rect1 = CRect(rect.TopLeft(), CSize((int)width*ScaleIndex, (int)height*ScaleIndex));
-		//将picture control调整到图像缩放后的大小
-		//				CWnd *pWnd;
-		//				pWnd = GetDlgItem(IDC_PICTURE);
-		//				pWnd->MoveWindow(CRect((int)rect.top, (int)rect.left, (int)width*ScaleIndex, (int)height*ScaleIndex));
 		img->StretchBlt(pDC->m_hDC, rect1, SRCCOPY);
 	}
 	ReleaseDC(pDC);
@@ -164,6 +158,12 @@ BOOL CExperimentImgDlg::OnInitDialog()
 	this->threadNum.SetWindowTextW(CString(to_string(this->slider.GetPos()).c_str()));
 	this->comboBox.AddString(CString("椒盐噪声"));
 	this->comboBox.AddString(CString("中值滤波"));
+	this->comboBox.AddString(CString("双三阶插值（缩放）"));
+	this->comboBox.AddString(CString("双三阶插值（旋转）"));
+	this->comboBox.AddString(CString("自动色阶"));
+	this->comboBox.AddString(CString("自动白平衡"));
+	this->comboBox.AddString(CString("自适应双边滤波"));
+	this->comboBox.AddString(CString("融合左右图"));
 	this->comboBox.SetCurSel(0);
 	srand(time(nullptr));
 	/************************************************************************/
@@ -282,8 +282,12 @@ void CExperimentImgDlg::OnBnClickedButton2()
 	if (this->m_pImgSrc) {
 		this->LogInfo("处理中");
 		auto initTime = clock();
-		ImageProcesser imgPro(this->m_pImgSrc,typeName, threadNum,isCurrent);
-		this->m_pImgDst = imgPro.go();
+		if (typeName == "融合左右图") {
+			this->m_pImgDst=ImageProcesser::merge(m_pImgSrc, m_pImgDst, 0.5);
+		}else {
+			ImageProcesser imgPro(this->m_pImgSrc, typeName, threadNum, isCurrent);
+			this->m_pImgDst = imgPro.go();
+		}
 		this->paintPic(m_pImgDst, picRight);
 		this->LogInfo(string("处理完成。耗时")+to_string(clock()-initTime)+string("毫秒"));
 	}

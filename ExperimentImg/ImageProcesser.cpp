@@ -2,7 +2,7 @@
 #include "ImageProcesser.h"
 
 
-
+float ImageProcesser::a= -0.5;
 ImageProcesser::ImageProcesser(CImage * img, const CString & cstr, int threadNum, bool isCurrent)
 {
 	this->initImg = img;
@@ -149,6 +149,21 @@ CImage* ImageProcesser::go()
 	else if (this->cstr=="中值滤波"){
 		this->mat = this->medianBlur(this->mat, 5);
 	}
+	else if (this->cstr == "双三阶插值（缩放）") {
+		this->mat = this->scale(this->mat, 2);
+	}
+	else if (this->cstr == "双三阶插值（旋转）") {
+		this->mat = this->rotate(this->mat, 45);
+	}
+	else if (this->cstr == "自动白平衡") {
+		this->mat = this->autoBalance(this->mat);
+	}
+	else if (this->cstr == "自动色阶") {
+		this->mat = this->autoLevel(this->mat);
+	}
+	else if (this->cstr == "自适应双边滤波") {
+		this->mat = this->bilateralFilter(this->mat,4,20,20);
+	}
 	this->img = new CImage();
 	this->MatToCImage(*this->mat, *this->img);
 	return this->img;
@@ -211,4 +226,216 @@ Mat * ImageProcesser::medianBlur(Mat * mat, int n)
 		}
 	}
 	return distMat;
+}
+
+// 因为展示的原因，原图需要比较小才可以
+Mat * ImageProcesser::scale(Mat * mat, float n)
+{
+	int newRow = mat->rows*n, newCol = mat->cols*n;
+	auto within = [&](int x, int y) {
+		return x >= 0 && y >= 0 && x < (mat->rows) && y < (mat->cols);
+	};
+	auto bigMat = new Mat(newRow, newCol, mat->type());
+	for (int i = 0; i < newRow; i++) {
+		for (int j = 0; j < newCol; j++) {
+			float x = i/n;
+			float y = j/n;
+			float w_x[4], w_y[4];//行列方向的加权系数
+			getW_x(w_x, x);
+			getW_y(w_y, y);
+			Vec3f temp = { 0, 0, 0 };
+			for (int s = 0; s < 4; s++) {
+				for (int t = 0; t < 4; t++) {
+					if (within(int(x) + s - 1, int(y) + t - 1))
+					temp += (Vec3f)(mat->at<Vec3b>(int(x) + s - 1, int(y) + t - 1))*w_x[s] * w_y[t];
+				}
+			}
+			bigMat->at<Vec3b>(i, j) = move((Vec3b)temp);
+		}
+	}
+	//this->fill(bigMat,mat);
+	return bigMat;
+}
+
+// 逆时针旋转，注意坐标系的变换
+Mat * ImageProcesser::rotate(Mat * mat, float angle)
+{
+	int newRow = mat->rows*cos(angle*PI/180)+mat->cols*sin(angle*PI/180), newCol = mat->rows*sin(angle*PI/180)+mat->cols*cos(angle*PI/180);
+	auto within = [&](int x, int y) {
+		return x >= 0 && y >= 0 && x < (mat->rows) && y < (mat->cols);
+	};
+	auto bigMat = new Mat(newRow, newCol, mat->type());
+	for (int i = 0; i < newRow; i++) {
+		for (int j = 0; j < newCol; j++) {
+			// 换坐标原点，旋转，再换回来，也可以理解为平移旋转矩阵相乘。
+			float x = (i-newRow/2)*cos(angle*PI/180)+(j-newCol/2)*sin(angle*PI / 180)+mat->rows/2;
+			float y = -(i-newRow/2)*sin(angle*PI / 180)+(j-newCol/2)*cos(angle*PI/180)+mat->cols/2;
+			float w_x[4], w_y[4];//行列方向的加权系数
+			getW_x(w_x, x);
+			getW_y(w_y, y);
+			Vec3f temp = { 0, 0, 0 };
+			for (int s = 0; s < 4; s++) {
+				for (int t = 0; t < 4; t++) {
+					if (within(int(x) + s - 1, int(y) + t - 1))
+						temp += (Vec3f)(mat->at<Vec3b>(int(x) + s - 1, int(y) + t - 1))*w_x[s] * w_y[t];
+				}
+			}
+			bigMat->at<Vec3b>(i, j) = move((Vec3b)temp);
+		}
+	}
+	return bigMat;
+}
+
+Mat * ImageProcesser::autoBalance(Mat * mat)
+{
+	double R = 0, G = 0, B = 0;
+	for (int x = 0; x < mat->rows; ++x) {
+		for (int y = 0; y < mat->cols; ++y) {
+			auto point = mat->at<Vec3b>(x, y);
+			R += point[0];
+			G += point[1];
+			B += point[2];
+		}
+	}
+	double KR = (R + G + B) / (3 * R), KG = (R + G + B) / (3 * G), KB = (R + G + B) / (3 * B);
+	for (int x = 0; x < mat->rows; ++x) {
+		for (int y = 0; y < mat->cols; ++y) {
+			auto& point = mat->at<Vec3b>(x, y);
+			point[0] = min(255, int(point[0] * KR));
+			point[1] = min(255, int(point[1] * KG));
+			point[2] = min(255, int(point[2] * KB));
+		}
+	}
+	return this->mat;
+}
+
+Mat * ImageProcesser::autoLevel(Mat * mat)
+{
+	int maxx[3] = { 0,0,0 }, minn[3] = { 255,255,255 };
+	for (int x = 0; x < mat->rows; ++x) {
+		for (int y = 0; y < mat->cols; ++y) {
+			auto& point = mat->at<Vec3b>(x, y);
+			for (auto i = 0; i < 3; ++i) {
+				if (point[i] > maxx[i]) {
+					maxx[i] = point[i];
+				}
+				if (point[i] < minn[i]) {
+					minn[i] = point[i];
+				}
+			}
+		}
+	}
+	for (int x = 0; x < mat->rows; ++x) {
+		for (int y = 0; y < mat->cols; ++y) {
+			auto& point = mat->at<Vec3b>(x, y);
+			for (auto i = 0; i < 3; ++i) {
+				if (maxx[i]!=minn[i]){
+					point[i] = float(point[i] - minn[i]) / (maxx[i] - minn[i]) * 255;
+				}
+			}
+		}
+	}
+	return mat;
+}
+
+Mat * ImageProcesser::bilateralFilter(Mat * mat, int d, double sigmaColor, double sigmaSpace)
+{
+	auto within = [&](int x, int y) {
+		return x >= 0 && y >= 0 && x < (mat->rows) && y < (mat->cols);
+	};
+	auto spaceFunction = [&](int x, int y, int xx, int yy) {
+		return -((x - xx)*(x - xx) + (y - yy)*(y - yy)) / (2 * sigmaSpace*sigmaSpace);
+	};
+	auto colorFunction = [&](int a,int b) {
+		return -(a-b)*(a-b) / (2 * sigmaColor*sigmaColor);
+	};
+	auto distMat = new Mat(mat->rows, mat->cols, mat->type());
+	// 不想理偶数核
+	if (d % 2 == 0) d += 1;
+	//bilateralFilter(*mat, *distMat, d, sigmaColor, sigmaSpace);
+	#pragma omp parallel for num_threads(threadNum)
+	for (int x = 0; x < mat->rows; ++x) {
+		for (int y = 0; y < mat->cols; ++y) {
+			auto& centerPoint = mat->at<Vec3b>(x, y);
+			double sums[3] = { 0,0,0 };
+			double color[3] = { 0,0,0 };
+			for (int xx = x - d / 2; xx <= x + d / 2; ++xx) {
+				for (int yy = y - d / 2; yy <= y + d / 2; ++yy) {
+					if (within(xx, yy)) {
+						auto& point = mat->at<Vec3b>(xx, yy);
+						for (int i = 0; i < 3; ++i) {
+							double d = spaceFunction(x, y, xx, yy);
+							double r = colorFunction(point[i], centerPoint[i]);
+							double w = exp(d + r);
+							color[i] += point[i] * w;
+							sums[i] += w;
+						}
+					}
+				}
+			}
+			for (int i = 0; i < 3; ++i) {
+				color[i] /= sums[i];
+				color[i] = max(0, int(color[i]));
+				color[i] = min(255, int(color[i]));
+			}
+			distMat->at<Vec3b>(x, y) = Vec3b{uchar(color[0]),uchar(color[1]),uchar(color[2])};
+		}
+	}
+	return distMat;
+}
+
+CImage * ImageProcesser::merge(CImage * src, CImage * dist,double alpha)
+{
+
+	auto srcMat = new Mat(), distMat = new Mat();
+	CImageToMat(*src, *srcMat);
+	CImageToMat(*dist, *distMat);
+	auto within = [&](int x, int y) {
+		return x >= 0 && y >= 0 && x < (srcMat->rows) && y < (distMat->cols);
+	};
+	for (int x = 0; x < distMat->rows; ++x) {
+		for (int y = 0; y < distMat->cols; ++y) {
+			if (within(x,y)){
+				auto &srcPoint = srcMat->at<Vec3b>(x, y);
+				auto &distPoint = distMat->at<Vec3b>(x, y);
+				for (int i = 0; i < 3; ++i) {
+					distPoint[i] = min(int(alpha*srcPoint[i] + (1 - alpha)*distPoint[i]), 255);
+				}
+			}
+		}
+	}
+	auto img = new CImage();
+	MatToCImage(*distMat, *img);
+	return img;
+}
+
+
+void ImageProcesser::getW_x(float w_x[4], float x)
+{
+	int X = (int)x;//取整数部分
+	float stemp_x[4];
+	stemp_x[0] = 1 + (x - X);
+	stemp_x[1] = x - X;
+	stemp_x[2] = 1 - (x - X);
+	stemp_x[3] = 2 - (x - X);
+
+	w_x[0] = a*abs(stemp_x[0] * stemp_x[0] * stemp_x[0]) - 5 * a*stemp_x[0] * stemp_x[0] + 8 * a*abs(stemp_x[0]) - 4 * a;
+	w_x[1] = (a + 2)*abs(stemp_x[1] * stemp_x[1] * stemp_x[1]) - (a + 3)*stemp_x[1] * stemp_x[1] + 1;
+	w_x[2] = (a + 2)*abs(stemp_x[2] * stemp_x[2] * stemp_x[2]) - (a + 3)*stemp_x[2] * stemp_x[2] + 1;
+	w_x[3] = a*abs(stemp_x[3] * stemp_x[3] * stemp_x[3]) - 5 * a*stemp_x[3] * stemp_x[3] + 8 * a*abs(stemp_x[3]) - 4 * a;
+}
+
+void ImageProcesser::getW_y(float w_y[4], float y)
+{
+	int Y = (int)y;
+	float stemp_y[4];
+	stemp_y[0] = 1.0 + (y - Y);
+	stemp_y[1] = y - Y;
+	stemp_y[2] = 1 - (y - Y);
+	stemp_y[3] = 2 - (y - Y);
+
+	w_y[0] = a*abs(stemp_y[0] * stemp_y[0] * stemp_y[0]) - 5 * a*stemp_y[0] * stemp_y[0] + 8 * a*abs(stemp_y[0]) - 4 * a;
+	w_y[1] = (a + 2)*abs(stemp_y[1] * stemp_y[1] * stemp_y[1]) - (a + 3)*stemp_y[1] * stemp_y[1] + 1;
+	w_y[2] = (a + 2)*abs(stemp_y[2] * stemp_y[2] * stemp_y[2]) - (a + 3)*stemp_y[2] * stemp_y[2] + 1;
+	w_y[3] = a*abs(stemp_y[3] * stemp_y[3] * stemp_y[3]) - 5 * a*stemp_y[3] * stemp_y[3] + 8 * a*abs(stemp_y[3]) - 4 * a;
 }
