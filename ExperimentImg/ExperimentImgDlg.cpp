@@ -283,7 +283,7 @@ void CExperimentImgDlg::OnBnClickedButton2()
 		this->LogInfo("处理中");
 		auto initTime = clock();
 		if (typeName == "融合左右图") {
-			this->m_pImgDst=ImageProcesser::merge(m_pImgSrc, m_pImgDst, 0.5);
+			this->m_pImgDst=ImageProcesser::merge(m_pImgSrc, m_pImgDst, double(threadNum)/10);
 		}else {
 			ImageProcesser imgPro(this->m_pImgSrc, typeName, threadNum, isCurrent);
 			this->m_pImgDst = imgPro.go();
