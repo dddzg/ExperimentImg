@@ -84,8 +84,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>G:\数字媒体\course\opencv\build\include;$(IncludePath)</IncludePath>
-    <LibraryPath>G:\数字媒体\course\opencv\build\x64\vc14\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>G:\数字媒体\实验一\opencv\build\include;$(IncludePath)</IncludePath>
+    <LibraryPath>G:\数字媒体\实验一\opencv\build\x64\vc14\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -195,6 +195,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ExperimentImg.cpp" />
@@ -206,11 +207,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ExperimentImg.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ImageProcesser.cu" />
     <None Include="res\ExperimentImg.rc2" />
   </ItemGroup>
   <ItemGroup>

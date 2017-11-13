@@ -275,7 +275,7 @@ void CExperimentImgDlg::OnBnClickedButton2()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	int threadNum = this->slider.GetPos();
-	bool isCurrent = this->checkBox.GetCheck();
+	bool useGPU = this->checkBox.GetCheck();
 	CString typeName;
 	auto index = this->comboBox.GetCurSel();
 	this->comboBox.GetLBText(index, typeName);
@@ -285,7 +285,7 @@ void CExperimentImgDlg::OnBnClickedButton2()
 		if (typeName == "融合左右图") {
 			this->m_pImgDst=ImageProcesser::merge(m_pImgSrc, m_pImgDst, double(threadNum)/10);
 		}else {
-			ImageProcesser imgPro(this->m_pImgSrc, typeName, threadNum, isCurrent);
+			ImageProcesser imgPro(this->m_pImgSrc, typeName, threadNum, useGPU);
 			this->m_pImgDst = imgPro.go();
 		}
 		this->paintPic(m_pImgDst, picRight);

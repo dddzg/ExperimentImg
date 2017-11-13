@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="cuda">
+      <UniqueIdentifier>{fc32a757-1798-42cc-abf2-58b223aeb356}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -36,6 +39,9 @@
     <ClInclude Include="ImageProcesser.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="util.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ExperimentImg.cpp">
@@ -50,6 +56,9 @@
     <ClCompile Include="ImageProcesser.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="util.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ExperimentImg.rc">
@@ -59,6 +68,9 @@
   <ItemGroup>
     <None Include="res\ExperimentImg.rc2">
       <Filter>资源文件</Filter>
+    </None>
+    <None Include="ImageProcesser.cu">
+      <Filter>cuda</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
