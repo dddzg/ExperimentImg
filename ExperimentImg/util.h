@@ -1,10 +1,12 @@
 #pragma once
 #include <cmath>
+#include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 using namespace cv;
+using namespace std;
 namespace util {
 /*双三阶插值的权重a*/
 static float a=-0.5;

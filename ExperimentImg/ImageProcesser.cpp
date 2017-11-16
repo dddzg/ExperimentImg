@@ -228,7 +228,7 @@ Mat * ImageProcesser::medianBlur(Mat * mat, int n)
 Mat * ImageProcesser::scale(Mat * mat, float n)
 {
 	if (this->useGPU) { 
-		scaleUseCuda(mat,n); 
+		return scaleUseCuda(mat,n); 
 	}
 	int newRow = mat->rows*n, newCol = mat->cols*n;
 	auto bigMat = new Mat(newRow, newCol, mat->type());
