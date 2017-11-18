@@ -20,9 +20,9 @@ __global__ void scale(uchar3* src, uchar3* dist,int srcRow,int srcCol,int distRo
 	auto withinDist = [&](int x, int y) {
 		return x >= 0 && y >= 0 && x < distRow && y < distCol;
 	};
-	// 由三阶线性插值的定义而生，由于cuda里只能调用__global__的函数，所以只能复制过来了。。
+	// 双三阶线性插值的定义。由于cuda里只能调用__global__的函数，所以只能复制过来了。。
 	auto getW_x = [&](float w_x[4], float x) {
-		int X = (int)x;//取整数部分
+		int X = (int)x;
 		float stemp_x[4];
 		stemp_x[0] = 1 + (x - X);
 		stemp_x[1] = x - X;
