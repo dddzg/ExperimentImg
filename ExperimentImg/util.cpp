@@ -36,3 +36,8 @@ bool util::within(Mat * mat, int x, int y)
 	if (x >= 0 && y >= 0 && x < (mat->rows) && y < (mat->cols)) return true;
 	return false;
 }
+
+float util::toRadian(float angle)
+{
+	return angle*PI / 180;
+}

@@ -257,14 +257,18 @@ Mat * ImageProcesser::scale(Mat * mat, float n)
 // 逆时针旋转，注意坐标系的变换
 Mat * ImageProcesser::rotate(Mat * mat, float angle)
 {
-	int newRow = mat->rows*cos(angle*PI / 180) + mat->cols*sin(angle*PI / 180), newCol = mat->rows*sin(angle*PI / 180) + mat->cols*cos(angle*PI / 180);
+	if (this->useGPU) {
+		return rotateUseCuda(mat, angle);
+	}
+	auto radian = toRadian(angle);
+	int newRow = mat->rows*cos(radian) + mat->cols*sin(radian), newCol = mat->rows*sin(radian) + mat->cols*cos(radian);
 	auto bigMat = new Mat(newRow, newCol, mat->type());
 	#pragma omp parallel for num_threads(threadNum)
 	for (int i = 0; i < newRow; i++) {
 		for (int j = 0; j < newCol; j++) {
 			// 换坐标原点，旋转，再换回来，也可以理解为平移旋转矩阵相乘。
-			float x = (i - newRow / 2)*cos(angle*PI / 180) + (j - newCol / 2)*sin(angle*PI / 180) + mat->rows / 2;
-			float y = -(i - newRow / 2)*sin(angle*PI / 180) + (j - newCol / 2)*cos(angle*PI / 180) + mat->cols / 2;
+			float x = (i - newRow / 2)*cos(radian) + (j - newCol / 2)*sin(radian) + mat->rows / 2;
+			float y = -(i - newRow / 2)*sin(radian) + (j - newCol / 2)*cos(radian) + mat->cols / 2;
 			float w_x[4], w_y[4];//行列方向的加权系数
 			getW_x(w_x, x);
 			getW_y(w_y, y);

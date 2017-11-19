@@ -12,6 +12,7 @@ using namespace std;
 using namespace util;
 // ÒýÓÃCUDA
 extern "C" Mat* scaleUseCuda(Mat* mat,float n);
+extern "C" Mat* rotateUseCuda(Mat* mat, float angle);
 class ImageProcesser {
 public:
 	ImageProcesser(CImage* img,const CString& cstr,int threadNum=1,bool useGPU=false);
