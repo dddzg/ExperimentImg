@@ -250,7 +250,6 @@ Mat * ImageProcesser::scale(Mat * mat, float n)
 			bigMat->at<Vec3b>(i, j) = move((Vec3b)temp);
 		}
 	}
-	//this->fill(bigMat,mat);
 	return bigMat;
 }
 
@@ -379,22 +378,25 @@ Mat * ImageProcesser::bilateralFilter(Mat * mat, int d, double sigmaColor, doubl
 	return distMat;
 }
 
-CImage * ImageProcesser::merge(CImage * src, CImage * dist,double alpha)
+CImage * ImageProcesser::merge(CImage * src, CImage * dist,double alpha, bool useGPU)
 {
-
 	auto srcMat = new Mat(), distMat = new Mat();
 	CImageToMat(*src, *srcMat);
 	CImageToMat(*dist, *distMat);
-	auto within = [&](int x, int y) {
-		return x >= 0 && y >= 0 && x < (srcMat->rows) && y < (srcMat->cols);
-	};
-	for (int x = 0; x < distMat->rows; ++x) {
-		for (int y = 0; y < distMat->cols; ++y) {
-			if (within(x,y)){
-				auto &srcPoint = srcMat->at<Vec3b>(x, y);
-				auto &distPoint = distMat->at<Vec3b>(x, y);
-				for (int i = 0; i < 3; ++i) {
-					distPoint[i] = min(int(alpha*srcPoint[i] + (1 - alpha)*distPoint[i]), 255);
+	if (useGPU) {
+		distMat=mergeUseCuda(srcMat,distMat,alpha);
+	} else{
+		auto within = [&](int x, int y) {
+			return x >= 0 && y >= 0 && x < (srcMat->rows) && y < (srcMat->cols);
+		};
+		for (int x = 0; x < distMat->rows; ++x) {
+			for (int y = 0; y < distMat->cols; ++y) {
+				if (within(x, y)) {
+					auto &srcPoint = srcMat->at<Vec3b>(x, y);
+					auto &distPoint = distMat->at<Vec3b>(x, y);
+					for (int i = 0; i < 3; ++i) {
+						distPoint[i] = min(int(alpha*srcPoint[i] + (1 - alpha)*distPoint[i]), 255);
+					}
 				}
 			}
 		}

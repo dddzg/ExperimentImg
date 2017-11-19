@@ -13,6 +13,7 @@ using namespace util;
 // ÒýÓÃCUDA
 extern "C" Mat* scaleUseCuda(Mat* mat,float n);
 extern "C" Mat* rotateUseCuda(Mat* mat, float angle);
+extern "C" Mat* mergeUseCuda(Mat* srcMat,Mat* distMat,float alpha);
 class ImageProcesser {
 public:
 	ImageProcesser(CImage* img,const CString& cstr,int threadNum=1,bool useGPU=false);
@@ -27,7 +28,7 @@ public:
 	Mat * autoBalance(Mat* mat);
 	Mat * autoLevel(Mat* mat);
 	Mat * bilateralFilter(Mat * mat, int d, double sigmaColor, double sigmaSpace );
-	static CImage* merge(CImage* src, CImage* dist, double alpha);
+	static CImage* merge(CImage* src, CImage* dist, double alpha,bool useGPU=0);
 private:
 	CImage* initImg;
 	CImage* img;
